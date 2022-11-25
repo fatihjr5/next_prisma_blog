@@ -24,6 +24,9 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
       author: {
         select: { name: true },
       },
+      category: {
+        select: {name: true}
+      }
     },
   });
   return {

@@ -10,6 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Category {
+  id           String       @id
+  createdDate  DateTime  @default(now())
+  modifiedDate DateTime? @updatedAt
+  name         String?
+  isActive     Boolean
+  posts        Post[]
+  @@unique([name])
+}
 
 model Post {
   id        String  @id @default(cuid())
@@ -18,6 +27,8 @@ model Post {
   published Boolean @default(false)
   author    User?   @relation(fields: [authorId], references: [id])
   authorId  String?
+  category  Category? @relation(fields: [categoryName], references: [name])
+  categoryName  String?
 }
 
 model Account {
@@ -68,4 +79,6 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+
 

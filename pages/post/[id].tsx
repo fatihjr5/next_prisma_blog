@@ -13,8 +13,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     },
     include: {
       author: {
-        select: { name: true, email: true },
+        select: {name: true, email: true}
       },
+      category: {
+        select: {id: true}
+      }
     },
   });
   return {
@@ -60,6 +63,7 @@ const Post: React.FC<PostProps> = (props) => {
             <button onClick={()=> publishPost(props.id)} className="text-black">Publish</button>
           )
         }
+
         {
           userHasValidSession && postBelongsToUser && (
             <button onClick={() => deletePost(props.id)}>Delete</button>
