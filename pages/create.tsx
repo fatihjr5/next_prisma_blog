@@ -1,12 +1,33 @@
 import React, {useState} from "react";
+import type { GetStaticProps } from "next";
 import PostLayout from "../component/PostLayout";
 import Router from "next/router";
 import Link from "next/link";
-
-const Draft: React.FC = () => {
+import { prisma } from "../lib/prisma";
+export type CategoryProps = {
+    id: string;
+    name: string;
+    content: string;
+    isActive: boolean;
+  };
+export const getStaticProps: GetStaticProps = async () => {
+    const feed = await prisma.category.findMany({
+      where: { isActive: true }
+    });
+    return {
+      props: { feed },
+      revalidate: 10,
+    };
+  };
+  type Props = {
+    feed : CategoryProps[]
+  }
+  
+const Draft: React.FC<Props> = (props) => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [categoryId, setCategoryName] = useState('');
+    const [categoryId, setCategoryId] = useState('1');
+
     const submitData = async (e: React.SyntheticEvent) => {
         e.preventDefault()
         try {
@@ -27,9 +48,10 @@ const Draft: React.FC = () => {
             <form onSubmit={submitData} className="flex flex-col">
                 <input className="w-96 mx-auto border border-gray-400" type="text" onChange={(e)=> setTitle(e.target.value)} value={title} placeholder="enter"/>
                 <textarea className="w-96 mx-auto border border-gray-400"  onChange={(e)=> setContent(e.target.value)} value={content} placeholder="enter"/>
-                <select onChange={(e)=> setCategoryName(e.target.value)}>
-                    <option value='1'>ko</option>
-                    <option value='2'>ok</option>
+                <select onChange={(e)=> setCategoryId(e.target.value)}>
+                    {props.feed.map((category)=>(
+                        <option value={category.id}>{category.name}</option>
+                    ))}
                 </select>
                 <div className="flex flex-row gap-x-4 justify-center">
                     <input disabled={!content || !title || !categoryId} className={!categoryId|| !content || !title ? `hidden`: ``} type="submit" value="create" />

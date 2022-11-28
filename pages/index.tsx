@@ -27,7 +27,7 @@ type Props = {
 const Blog: React.FC<Props> = (props) => {
   return (
     <Layout>
-      <main>
+      <main className='grid grid-cols-3'>
         {props.feed.map((post) => (
           <div
             key={post.id}

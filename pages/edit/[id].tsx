@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { GetStaticProps } from "next";
+import { CategoryProps } from '../create';
 import Router from 'next/router';
 import PostLayout from '../../component/PostLayout';
 import { PostProps } from '../../component/Post';
 import { useSession } from 'next-auth/react';
 import {prisma} from '../../lib/prisma';
-import Link from 'next/link';
 
-//eslint-disable-next-line
+
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const post = await prisma.post.findUnique({
     where: {
@@ -18,7 +19,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         select: {name: true, email: true}
       },
       category: {
-        select: {id: true}
+        select: {id: true, name: true}
       }
     },
   });
@@ -41,38 +42,46 @@ async function publishPost(id: string): Promise<void> {
   await Router.push('/');
 }
 
-const Post: React.FC<PostProps> = (props) => {
+export const getStaticProps: GetStaticProps = async () => {
+    const feed = await prisma.category.findMany({
+      where: { isActive: true }
+    });
+    return {
+      props: { feed },
+      revalidate: 10,
+    };
+  };
+const Post: React.FC<{post :PostProps, }> = (props) => {
   const { data: session, status } = useSession();
+  const [newTitle, setNewTitle] = useState(props.post.title)
+  const [newContent, setNewContent] = useState(props.post.content)
   if (status === 'loading') {
     return <div>Authenticating ...</div>;
   }
   const userHasValidSession = Boolean(session);
-  const postBelongsToUser = session?.user?.email === props.author?.email;
-  let title = props.title;
-  if (!props.published) {
+  const postBelongsToUser = session?.user?.email === props.post.author?.email;
+  let title = props.post.title;
+  if (!props.post.published) {
     title = `${title} (Draft)`;
   }
 
+  console.log(props)
   return (
     <PostLayout>
       <div>
         <div className="flex flex-col mb-4">
-          <h2 className="text-2xl lg:text-4xl font-bold">{title}</h2>
-          <p>By {props.author?.name || "Unknown author"}</p>
+          <textarea value={newTitle} onChange={(e)=> setNewTitle(e.target.value)}  className="text-2xl lg:text-4xl font-bold"/>
+          <p>By {props.post.author?.name || "Unknown author"}</p>
         </div>
-        <p className="text-base font-normal text-gray-700">{props.content}</p>
-        {!props.published && userHasValidSession && postBelongsToUser && (
-            <button onClick={()=> publishPost(props.id)} className="text-black">Publish</button>
+        
+        <textarea value={newContent} onChange={(e)=> setNewContent(e.target.value)} className="text-base font-normal text-gray-700"/>
+        {userHasValidSession && postBelongsToUser && (
+            <button onClick={()=> publishPost(props.post.id)} className="text-black">Edit</button>
           )
         }
         {
           userHasValidSession && postBelongsToUser && (
-            <Link href={`/edit/${props.id}`}>Edit</Link>
-          )
-        }
-        {
-          userHasValidSession && postBelongsToUser && (
-            <button onClick={() => deletePost(props.id)}>Delete</button>
+            <button onClick={() => deletePost(props.post.id)}>Delete</button>
           )
         }
       </div>
